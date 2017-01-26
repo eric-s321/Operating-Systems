@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <getopt.h>
 
 void printUsageAndExit(){
     fprintf(stderr, "Usage: prog1sorter [-u] [-n <num-integers>] [-m <min-int>] [-M <max-int>]\n"
@@ -16,19 +17,23 @@ void checkIntRanges(int minInt, int maxInt){
     }
 }
 
-int parseInput(int argc, char *argv[], int *numInts, int * minInt, 
-        int *maxInt, char **inputFile, char **outputFile, char **countFile){
-    int index = 1; //skip the ./prog1sorter index of argv
+void parseInput(int argc, char *argv[], int *numInts, int * minInt, 
+    int *maxInt, char **inputFile, char **outputFile, char **countFile){
     int arg;
     while ((arg = getopt(argc, argv, "un:m:M:i:o:c:")) != -1){
-//        printf("arg is %d\n", arg);
+		if(optarg[0] == '-'){
+			printf("Missing an argument.\n");
+			printUsageAndExit();
+		}
         switch(arg){
+			case '?':
+				printf("An argmument was expected.\n");
+				printUsageAndExit();	
+				break;
             case 'u':
-                index += 1;
                 printUsageAndExit(); 
                 break;
             case 'n': 
-                index += 2;
                 *numInts = atoi(optarg);
                 if (*numInts < 0 || *numInts > 1000000){
                     fprintf(stderr, "The argument following -n must between the values of 0 and 1000000 inclusive.\n");
@@ -36,7 +41,6 @@ int parseInput(int argc, char *argv[], int *numInts, int * minInt,
                 }
                 break;
             case 'm':
-                index += 2;
                 *minInt = atoi(optarg);
                 if(*minInt < 1){
                     fprintf(stderr, "The minimum value for the -m flag is 1.\n");
@@ -44,7 +48,6 @@ int parseInput(int argc, char *argv[], int *numInts, int * minInt,
                 }
                 break;
             case 'M':
-                index += 2;
                 *maxInt = atoi(optarg);
                 if(*maxInt > 1000000){
                     fprintf(stderr, "The maximum value for the -M flag is 1000000.\n");
@@ -52,15 +55,12 @@ int parseInput(int argc, char *argv[], int *numInts, int * minInt,
                 }
                 break;
             case 'i':
-                index += 2;
                 *inputFile = optarg;
                 break;
             case 'o':
-                index += 2;
                 *outputFile = optarg;
                 break;
             case 'c':
-                index += 2;
                 *countFile = optarg;
                 break;
             default:
@@ -68,41 +68,18 @@ int parseInput(int argc, char *argv[], int *numInts, int * minInt,
                 break;
         }
     }
-    return index;
 }
 
-int * readStdin(char *argv[], int index, int numInts, int *nums){
-    int originalIndex = index;
-    for(int i = 0; index < numInts + originalIndex; index++, i++){
-        nums[i] = atoi(argv[index]);
-    }
-    return nums;
-}
-
-int * readFromFile(char *inputFile, int numInts, int *nums){
-    FILE *file = fopen(inputFile, "r");  
-    if(file == NULL){
-        fprintf(stderr, "Error opening file %s\n", inputFile);
-        exit(EXIT_FAILURE);
-    } 
+int * readInput(FILE *input, int numInts, int *nums){
     char buf[10];
     int i = 0;
-  /*  int num;
-    while(!feof(file)){
-        printf("i is %d and numInts is %d\n",i,numInts);
-        fscanf(file,"%d",&num);
-        nums[i] = num;
-        i++;
-    }*/
-    while(fgets(buf, sizeof(buf), file) != NULL){
+
+    while(fgets(buf, sizeof(buf), input) != NULL){
         nums[i] = atoi(buf);
         i++;
     }
-    for(int j = 0; j < i; j++){
-        printf("%d\t",nums[j]);
-    }
-    printf("\n");
-    fclose(file);
+
+    fclose(input);
     return nums;
 }
 
@@ -115,16 +92,21 @@ int main(int argc, char *argv[]){
     char *outputFile = NULL;
     char *countFile = NULL;
 
-    int index = parseInput(argc, argv, &numInts, &minInt, &maxInt,
+    parseInput(argc, argv, &numInts, &minInt, &maxInt,
             &inputFile, &outputFile, &countFile);
 
     //Get Input
     int *nums = (int *) malloc(sizeof(int) * numInts);
     if(inputFile == NULL){ //input is in stdin
-        nums = readStdin(argv, index, numInts, nums);
+		nums = readInput(stdin, numInts, nums);
     }
     else{ //input is in file
-        nums = readFromFile(inputFile, numInts, nums);
+		FILE *file = fopen(inputFile,"r");
+		if(file == NULL){
+			fprintf(stderr, "Error opening file %s\n", inputFile);
+			exit(EXIT_FAILURE);
+		} 
+		nums = readInput(file, numInts, nums);
     }
     
     printf("Printing nums...\n");
@@ -132,6 +114,7 @@ int main(int argc, char *argv[]){
         printf("%d\t", nums[i]);
     }
     printf("\n");
+	free(nums);
 /*
     if(outputFile != NULL)
         writeOutputFile = true;

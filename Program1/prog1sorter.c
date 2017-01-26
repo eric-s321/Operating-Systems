@@ -71,7 +71,7 @@ void parseInput(int argc, char *argv[], int *numInts, int * minInt,
 }
 
 int * readInput(FILE *input, int numInts, int *nums){
-    char buf[10];
+    char buf[255];
     int i = 0;
 
     while(fgets(buf, sizeof(buf), input) != NULL){
@@ -80,11 +80,12 @@ int * readInput(FILE *input, int numInts, int *nums){
     }
 
     fclose(input);
-    return nums;
+	return nums;
 }
 
-int main(int argc, char *argv[]){
+int main(int argc, char *argv[], char *envp[]){
     //Set default values
+	printf("%s\n",getenv("USER"));
     int numInts = 100;  //integers to read and sort
     int minInt = 1;
     int maxInt = 255;

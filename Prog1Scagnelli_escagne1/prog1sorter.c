@@ -20,6 +20,26 @@ int compareInts(const void *a, const void *b){
     return val1 - val2;
 }
 
+int getoOccurrenceArraySize(char *userName){
+    int size = 0;
+    for(int i = 0; userName[i] != '\0'; i++)
+        size++;
+    return size;
+}
+
+
+// Calculate how many times the ASCII value of each character in the userID appears in the input
+void countUserNameOccurrences(char *userName, int nums[], int lastIndex, int occurrences[]){
+    for(int i = 0; userName[i] != '\0'; i++){
+        int count = 0;
+        for(int j = 0; j < lastIndex; j++){
+            if(nums[j] == (int)userName[i])
+                count++;
+        }
+        occurrences[i] = count;
+    }
+}
+
 //make sure all input is within range and exit on first one out of range
 void checkIntRanges(int minInt, int maxInt, int *nums, int lastIndex){
     if (maxInt < minInt){
@@ -41,7 +61,6 @@ void checkArgument(char *optarg){
 		printUsageAndExit();
 	}
 }
-
 
 void parseInput(int argc, char *argv[], int *numInts, int * minInt, 
     int *maxInt, char **inputFile, char **outputFile, char **countFile){
@@ -103,7 +122,15 @@ int readInput(FILE *input, int numInts, int *nums){
     char buf[255];
     int i = 0;
     int numLines = 0; 
+    int firstLine;
 
+    //Extract first line and check it matches the -n flag
+    fgets(buf, sizeof(buf), input);
+    firstLine = atoi(buf);
+    if(firstLine != numInts){
+        fprintf(stderr, "The first line of input and the num-integers argument do not match.\n"); 
+        printUsageAndExit();
+    }
     while(i < numInts && fgets(buf, sizeof(buf), input) != NULL){
         nums[i] = atoi(buf);
         i++;
@@ -116,7 +143,7 @@ int readInput(FILE *input, int numInts, int *nums){
 
 int main(int argc, char *argv[]){
     //Set default values
-	printf("%s\n",getenv("USER"));
+    char *userName = getenv("USER");
     int numInts = 100;  //integers to read and sort
     int minInt = 1;
     int maxInt = 255;
@@ -143,7 +170,7 @@ int main(int argc, char *argv[]){
     }
 
     checkIntRanges(minInt, maxInt, nums, lastIndex);
-    
+
     printf("Before sorting...\n");
     for(int i = 0; i < lastIndex; i++){
         printf("%d\t", nums[i]);
@@ -156,6 +183,17 @@ int main(int argc, char *argv[]){
     for(int i = 0; i < lastIndex; i++){
         printf("%d\t", nums[i]);
     }
-    printf("\n");
+    printf("\n\n");
+
+    int occurrenceArraySize = getoOccurrenceArraySize(userName);
+    int *occurrences = (int *) malloc(sizeof(int) * occurrenceArraySize);
+
+    countUserNameOccurrences(userName, nums, lastIndex, occurrences);
+
+    for(int i = 0; userName[i] != '\0'; i++){
+        printf("%c\t%d\t%d\n", userName[i], (int)userName[i], occurrences[i]);
+    } 
+
+    free(occurrences);
 	free(nums);
 }

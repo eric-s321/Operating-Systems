@@ -2,12 +2,22 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <getopt.h>
-#include <stdbool.h>
 
 void printUsageAndExit(){
     fprintf(stderr, "Usage: prog1sorter [-u] [-n <num-integers>] [-m <min-int>] [-M <max-int>]\n"
             "[-i <input-file-name>] [-o <output-file-name>] [-c <count-file-name>]\n");
     exit(EXIT_FAILURE);
+}
+
+/*
+ * Returns negative value if a should be placed before b
+ * Returns positive value if b should be placed before a 
+ * Returns 0 if a == b.
+ */
+int compareInts(const void *a, const void *b){
+    int val1 = *(int *)a; //Cast to a pointer to an int and then dereference
+    int val2 = *(int *)b;
+    return val1 - val2;
 }
 
 //make sure all input is within range and exit on first one out of range
@@ -92,9 +102,9 @@ void parseInput(int argc, char *argv[], int *numInts, int * minInt,
 int readInput(FILE *input, int numInts, int *nums){
     char buf[255];
     int i = 0;
-    int numLines = 0;
+    int numLines = 0; 
 
-    while(fgets(buf, sizeof(buf), input) != NULL && i < numInts){
+    while(i < numInts && fgets(buf, sizeof(buf), input) != NULL){
         nums[i] = atoi(buf);
         i++;
         numLines++;
@@ -134,33 +144,18 @@ int main(int argc, char *argv[]){
 
     checkIntRanges(minInt, maxInt, nums, lastIndex);
     
-    printf("Printing nums...\n");
+    printf("Before sorting...\n");
+    for(int i = 0; i < lastIndex; i++){
+        printf("%d\t", nums[i]);
+    }
+    printf("\n");
+
+    qsort(nums, lastIndex, sizeof(int), compareInts);
+
+    printf("After sorting...\n");
     for(int i = 0; i < lastIndex; i++){
         printf("%d\t", nums[i]);
     }
     printf("\n");
 	free(nums);
-/*
-    if(outputFile != NULL)
-        writeOutputFile = true;
-    if(countFile != NULL)
-        writeCountFile = true;
-*/
-/*
-    printf("BACK IN MAIN\n");
-    printf("numInts is %d\n"
-            "minInt is %d\n"
-            "maxInt is %d\n"
-            "inputFile is %s\n"
-            "outputFile is %s\n"
-            "countFile is %s\n",
-            numInts, minInt, maxInt, 
-            inputFile, outputFile, countFile);
-    if(readInputFile)
-        printf("read is true\n");
-    if(writeOutputFile)
-        printf("output is true\n");
-    if(writeCountFile)
-        printf("count is true\n");
-*/
 }

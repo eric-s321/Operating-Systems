@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <getopt.h>
+#include "timing.c"
 
 void printUsageAndExit(){
     fprintf(stderr, "Usage: prog1sorter [-u] [-n <num-integers>] [-m <min-int>] [-M <max-int>]\n"
@@ -119,7 +120,7 @@ void parseInput(int argc, char *argv[], int *numInts, int * minInt,
 }
 
 int readInput(FILE *input, int numInts, int *nums){
-    char buf[255];
+    char *buf = (char *) malloc(sizeof(char) * 255);
     int i = 0;
     int numLines = 0; 
     int firstLine;
@@ -138,6 +139,7 @@ int readInput(FILE *input, int numInts, int *nums){
     }
 
     fclose(input);
+    free(buf);
 	return numLines;  //last index that should be accessed in the array
 }
 
@@ -165,6 +167,8 @@ int main(int argc, char *argv[]){
 
     parseInput(argc, argv, &numInts, &minInt, &maxInt,
             &inputFile, &outputFile, &countFile);
+    
+    time_t startTime = startTiming(); //Begin timing program after parsing
 
     //Get Input
     int *nums = (int *) malloc(sizeof(int) * numInts);
@@ -222,4 +226,7 @@ int main(int argc, char *argv[]){
 
     free(occurrences);
 	free(nums);
+
+    double totalTime = endTiming(startTime);
+    fprintf(stderr, "The program took %.6f seconds.\n", totalTime);
 }

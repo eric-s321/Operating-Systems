@@ -141,6 +141,18 @@ int readInput(FILE *input, int numInts, int *nums){
 	return numLines;  //last index that should be accessed in the array
 }
 
+void writeSortedOutput(FILE *output, int numInts, int nums[]){
+    for(int i = 0; i < numInts; i++){
+        fprintf(output, "%d\n", nums[i]);
+    } 
+}
+
+void writeCountOutput(FILE *output, char *userName, int occurrences[]){
+    for(int i = 0; userName[i] != '\0'; i++){
+        fprintf(output, "%c\t%d\t%d\n", userName[i], (int)userName[i], occurrences[i]);
+    } 
+}
+
 int main(int argc, char *argv[]){
     //Set default values
     char *userName = getenv("USER");
@@ -175,24 +187,38 @@ int main(int argc, char *argv[]){
     for(int i = 0; i < lastIndex; i++){
         printf("%d\t", nums[i]);
     }
-    printf("\n");
+    printf("\n\n");
 
     qsort(nums, lastIndex, sizeof(int), compareInts);
 
-    printf("After sorting...\n");
-    for(int i = 0; i < lastIndex; i++){
-        printf("%d\t", nums[i]);
+    if(outputFile == NULL){ //output is stdout
+        writeSortedOutput(stdout, numInts, nums);
     }
-    printf("\n\n");
+    else{ //output should be written to a file
+        FILE *file = fopen(outputFile, "w");
+        if(file == NULL){
+            fprintf(stderr, "Error creating file %s\n", outputFile);
+            exit(EXIT_FAILURE);
+        }
+        writeSortedOutput(file, numInts, nums);
+    }
 
     int occurrenceArraySize = getoOccurrenceArraySize(userName);
     int *occurrences = (int *) malloc(sizeof(int) * occurrenceArraySize);
 
     countUserNameOccurrences(userName, nums, lastIndex, occurrences);
 
-    for(int i = 0; userName[i] != '\0'; i++){
-        printf("%c\t%d\t%d\n", userName[i], (int)userName[i], occurrences[i]);
-    } 
+    if(countFile == NULL){
+        writeCountOutput(stdout, userName, occurrences);
+    }
+    else{
+        FILE *file = fopen(countFile, "w");
+        if(file == NULL){
+            fprintf(stderr, "Error creating file %s\n", countFile);
+            exit(EXIT_FAILURE);
+        }
+        writeCountOutput(file, userName, occurrences);
+    }
 
     free(occurrences);
 	free(nums);

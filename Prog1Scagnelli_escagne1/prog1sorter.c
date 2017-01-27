@@ -10,11 +10,19 @@ void printUsageAndExit(){
 }
 
 //make sure all input is within range and exit on first one out of range
-void checkIntRanges(int minInt, int maxInt){
+void checkIntRanges(int minInt, int maxInt, int *nums, int lastIndex){
     if (maxInt < minInt){
         fprintf(stderr, "The maximum integer cannot be larger then the minimum integer.\n");
         exit(EXIT_FAILURE);
     }
+    for(int i = 0; i < lastIndex; i++){
+        if(nums[i] < minInt || nums[i] > maxInt){
+            fprintf(stderr, "Error: the number %d is out of the specified range of %d-%d\n",
+                    nums[i], minInt, maxInt);
+            exit(EXIT_FAILURE);
+        }
+    }
+
 }
 
 void parseInput(int argc, char *argv[], int *numInts, int * minInt, 
@@ -70,20 +78,22 @@ void parseInput(int argc, char *argv[], int *numInts, int * minInt,
     }
 }
 
-int * readInput(FILE *input, int numInts, int *nums){
+int readInput(FILE *input, int numInts, int *nums){
     char buf[255];
     int i = 0;
+    int numLines = 0;
 
     while(fgets(buf, sizeof(buf), input) != NULL){
         nums[i] = atoi(buf);
         i++;
+        numLines++;
     }
 
     fclose(input);
-	return nums;
+	return numLines;  //last index that should be accessed in the array
 }
 
-int main(int argc, char *argv[], char *envp[]){
+int main(int argc, char *argv[]){
     //Set default values
 	printf("%s\n",getenv("USER"));
     int numInts = 100;  //integers to read and sort
@@ -98,8 +108,9 @@ int main(int argc, char *argv[], char *envp[]){
 
     //Get Input
     int *nums = (int *) malloc(sizeof(int) * numInts);
+    int lastIndex;
     if(inputFile == NULL){ //input is in stdin
-		nums = readInput(stdin, numInts, nums);
+		lastIndex = readInput(stdin, numInts, nums);
     }
     else{ //input is in file
 		FILE *file = fopen(inputFile,"r");
@@ -107,11 +118,13 @@ int main(int argc, char *argv[], char *envp[]){
 			fprintf(stderr, "Error opening file %s\n", inputFile);
 			exit(EXIT_FAILURE);
 		} 
-		nums = readInput(file, numInts, nums);
+		lastIndex = readInput(file, numInts, nums);
     }
+
+    checkIntRanges(minInt, maxInt, nums, lastIndex);
     
     printf("Printing nums...\n");
-    for(int i = 0; i < numInts; i++){
+    for(int i = 0; i < lastIndex; i++){
         printf("%d\t", nums[i]);
     }
     printf("\n");

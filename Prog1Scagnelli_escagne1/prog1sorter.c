@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <getopt.h>
+#include <stdbool.h>
 
 void printUsageAndExit(){
     fprintf(stderr, "Usage: prog1sorter [-u] [-n <num-integers>] [-m <min-int>] [-M <max-int>]\n"
@@ -22,26 +23,31 @@ void checkIntRanges(int minInt, int maxInt, int *nums, int lastIndex){
             exit(EXIT_FAILURE);
         }
     }
-
 }
+
+void checkArgument(char *optarg){
+	if(optarg[0] == '-'){
+		printf("Missing an argument.\n");
+		printUsageAndExit();
+	}
+}
+
 
 void parseInput(int argc, char *argv[], int *numInts, int * minInt, 
     int *maxInt, char **inputFile, char **outputFile, char **countFile){
     int arg;
     while ((arg = getopt(argc, argv, "un:m:M:i:o:c:")) != -1){
-		if(arg != 'u' && optarg[1] == '-'){
-			printf("Missing an argument.\n");
-			printUsageAndExit();
-		}
+        //printf("optarg[1] is %c\n", optarg[1]);
         switch(arg){
 			case '?':
-				printf("An argmument was expected.\n");
+				fprintf(stderr, "Invalid input.\n");
 				printUsageAndExit();	
 				break;
             case 'u':
                 printUsageAndExit(); 
                 break;
             case 'n': 
+                checkArgument(optarg);
                 *numInts = atoi(optarg);
                 if (*numInts < 0 || *numInts > 1000000){
                     fprintf(stderr, "The argument following -n must between the values of 0 and 1000000 inclusive.\n");
@@ -49,6 +55,7 @@ void parseInput(int argc, char *argv[], int *numInts, int * minInt,
                 }
                 break;
             case 'm':
+                checkArgument(optarg);
                 *minInt = atoi(optarg);
                 if(*minInt < 1){
                     fprintf(stderr, "The minimum value for the -m flag is 1.\n");
@@ -56,6 +63,7 @@ void parseInput(int argc, char *argv[], int *numInts, int * minInt,
                 }
                 break;
             case 'M':
+                checkArgument(optarg);
                 *maxInt = atoi(optarg);
                 if(*maxInt > 1000000){
                     fprintf(stderr, "The maximum value for the -M flag is 1000000.\n");
@@ -63,12 +71,15 @@ void parseInput(int argc, char *argv[], int *numInts, int * minInt,
                 }
                 break;
             case 'i':
+                checkArgument(optarg);
                 *inputFile = optarg;
                 break;
             case 'o':
+                checkArgument(optarg);
                 *outputFile = optarg;
                 break;
             case 'c':
+                checkArgument(optarg);
                 *countFile = optarg;
                 break;
             default:
@@ -83,7 +94,7 @@ int readInput(FILE *input, int numInts, int *nums){
     int i = 0;
     int numLines = 0;
 
-    while(fgets(buf, sizeof(buf), input) != NULL){
+    while(fgets(buf, sizeof(buf), input) != NULL && i < numInts){
         nums[i] = atoi(buf);
         i++;
         numLines++;

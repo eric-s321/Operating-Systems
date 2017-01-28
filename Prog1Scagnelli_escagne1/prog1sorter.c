@@ -1,8 +1,7 @@
-#include <stdlib.h>
-#include <stdio.h>
 #include <unistd.h>
 #include <getopt.h>
 #include "timing.c"
+#include "parser.c"
 
 void printUsageAndExit(){
     fprintf(stderr, "Usage: prog1sorter [-u] [-n <num-integers>] [-m <min-int>] [-M <max-int>]\n"
@@ -27,7 +26,6 @@ int getoOccurrenceArraySize(char *userName){
         size++;
     return size;
 }
-
 
 // Calculate how many times the ASCII value of each character in the userID appears in the input
 void countUserNameOccurrences(char *userName, int nums[], int lastIndex, int occurrences[]){
@@ -56,18 +54,15 @@ void checkIntRanges(int minInt, int maxInt, int *nums, int lastIndex){
     }
 }
 
-void checkArgument(char *optarg){
-	if(optarg[0] == '-'){
-		printf("Missing an argument.\n");
-		printUsageAndExit();
-	}
-}
-
 void parseInput(int argc, char *argv[], int *numInts, int * minInt, 
     int *maxInt, char **inputFile, char **outputFile, char **countFile){
     int arg;
+    bool missingArg = false;
+    setDefaults(numInts, minInt, maxInt);
     while ((arg = getopt(argc, argv, "un:m:M:i:o:c:")) != -1){
-        //printf("optarg[1] is %c\n", optarg[1]);
+        missingArg = parseSharedFlags(arg, optarg, numInts, minInt, maxInt, outputFile);
+        if(missingArg)
+            printUsageAndExit();
         switch(arg){
 			case '?':
 				fprintf(stderr, "Invalid input.\n");
@@ -76,44 +71,13 @@ void parseInput(int argc, char *argv[], int *numInts, int * minInt,
             case 'u':
                 printUsageAndExit(); 
                 break;
-            case 'n': 
-                checkArgument(optarg);
-                *numInts = atoi(optarg);
-                if (*numInts < 0 || *numInts > 1000000){
-                    fprintf(stderr, "The argument following -n must between the values of 0 and 1000000 inclusive.\n");
-                    exit(EXIT_FAILURE);
-                }
-                break;
-            case 'm':
-                checkArgument(optarg);
-                *minInt = atoi(optarg);
-                if(*minInt < 1){
-                    fprintf(stderr, "The minimum value for the -m flag is 1.\n");
-                    exit(EXIT_FAILURE);
-                }
-                break;
-            case 'M':
-                checkArgument(optarg);
-                *maxInt = atoi(optarg);
-                if(*maxInt > 1000000){
-                    fprintf(stderr, "The maximum value for the -M flag is 1000000.\n");
-                    exit(EXIT_FAILURE);
-                }
-                break;
             case 'i':
                 checkArgument(optarg);
                 *inputFile = optarg;
                 break;
-            case 'o':
-                checkArgument(optarg);
-                *outputFile = optarg;
-                break;
             case 'c':
                 checkArgument(optarg);
                 *countFile = optarg;
-                break;
-            default:
-                printUsageAndExit();
                 break;
         }
     }
@@ -156,19 +120,18 @@ void writeCountOutput(FILE *output, char *userName, int occurrences[]){
 }
 
 int main(int argc, char *argv[]){
-    //Set default values
     char *userName = getenv("USER");
-    int numInts = 100;  //integers to read and sort
-    int minInt = 1;
-    int maxInt = 255;
+    int numInts;
+    int minInt;
+    int maxInt;
     char *inputFile = NULL;
     char *outputFile = NULL;
     char *countFile = NULL;
 
     parseInput(argc, argv, &numInts, &minInt, &maxInt,
             &inputFile, &outputFile, &countFile);
-    
-    time_t startTime = startTiming(); //Begin timing program after parsing
+
+    struct timeval startTime = startTiming(); //Begin timing program after parsing
 
     //Get Input
     int *nums = (int *) malloc(sizeof(int) * numInts);
@@ -187,11 +150,13 @@ int main(int argc, char *argv[]){
 
     checkIntRanges(minInt, maxInt, nums, lastIndex);
 
+/*
     printf("Before sorting...\n");
     for(int i = 0; i < lastIndex; i++){
         printf("%d\t", nums[i]);
     }
     printf("\n\n");
+*/
 
     qsort(nums, lastIndex, sizeof(int), compareInts);
 

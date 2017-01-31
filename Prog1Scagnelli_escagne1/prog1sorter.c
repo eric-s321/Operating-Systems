@@ -1,7 +1,10 @@
+//#include <stdlib.h>
+//#include <stdio.h>
 #include <unistd.h>
 #include <getopt.h>
-#include "timing.c"
-#include "parser.c"
+#include "prog1sorter.h"
+#include "timing.h"
+#include "parser.h"
 
 void printUsageAndExit(){
     fprintf(stderr, "Usage: prog1sorter [-u] [-n <num-integers>] [-m <min-int>] [-M <max-int>]\n"
@@ -20,7 +23,7 @@ int compareInts(const void *a, const void *b){
     return val1 - val2;
 }
 
-int getoOccurrenceArraySize(char *userName){
+int getOccurrenceArraySize(char *userName){
     int size = 0;
     for(int i = 0; userName[i] != '\0'; i++)
         size++;
@@ -181,7 +184,7 @@ int main(int argc, char *argv[]){
         writeSortedOutput(file, numInts, nums);
     }
 
-    int occurrenceArraySize = getoOccurrenceArraySize(userName);
+    int occurrenceArraySize = getOccurrenceArraySize(userName);
     int *occurrences = (int *) malloc(sizeof(int) * occurrenceArraySize);
 
     countUserNameOccurrences(userName, nums, lastIndex, occurrences);

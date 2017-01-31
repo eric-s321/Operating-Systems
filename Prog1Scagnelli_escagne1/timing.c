@@ -1,5 +1,6 @@
 #include <stdlib.h>
-#include <sys/time.h>
+//#include <sys/time.h>
+#include "timing.h"
 
 //Returns current time to the caller
 struct timeval startTiming(){

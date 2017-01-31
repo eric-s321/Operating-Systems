@@ -1,7 +1,10 @@
+//#include <stdlib.h>
+//#include <stdio.h>
 #include <getopt.h>
 #include <time.h>
-#include "parser.c"
-#include "timing.c"
+#include "prog1generator.h"
+#include "parser.h"
+#include "timing.h"
 
 
 void printUsageAndExit(){

@@ -1,16 +1,25 @@
-all: prog1sorter
+CC = gcc
+CFLAGS = -Wall -std=c99
 
-prog1sorter: prog1sorter.o 
-	gcc -Wall -std=c99 -o prog1sorter prog1sorter.o
+all: prog1sorter prog1generator
 
-prog1sorter.o: prog1sorter.c timing.c parser.c
-	gcc -Wall -std=c99 -c prog1sorter.c timing.c parser.c
+prog1sorter: prog1sorter.o
+	$(CC) $(CFLAGS) -o prog1sorter prog1sorter.o
+
+prog1generator: prog1generator.o
+	$(CC) $(CFLAGS) -o prog1generator prog1generator.o
+
+prog1generator.o: prog1generator.c
+	$(CC) $(CFLAGS) -c prog1generator.c
+
+prog1sorter.o: prog1sorter.c
+	$(CC) $(CFLAGS) -c prog1sorter.c
 
 parser.o: parser.c
-	gcc -Wall -std=c99 -c parser.c
+	$(CC) $(CFLAGS) -c parser.c
 
 timing.o: timing.c
-	gcc -Wall -std=c99 -c timing.c
+	$(CC) $(CFLAGS) -c timing.c
 
 clean:
-	rm *.o prog1sorter 
+	rm *.o prog1sorter prog1generator

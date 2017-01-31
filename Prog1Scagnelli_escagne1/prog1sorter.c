@@ -61,6 +61,7 @@ void parseInput(int argc, char *argv[], int *numInts, int * minInt,
     setDefaults(numInts, minInt, maxInt);
     while ((arg = getopt(argc, argv, "un:m:M:i:o:c:")) != -1){
         missingArg = parseSharedFlags(arg, optarg, numInts, minInt, maxInt, outputFile);
+        bool missingFile = false;
         if(missingArg)
             printUsageAndExit();
         switch(arg){
@@ -72,11 +73,19 @@ void parseInput(int argc, char *argv[], int *numInts, int * minInt,
                 printUsageAndExit(); 
                 break;
             case 'i':
-                checkArgument(optarg);
+                missingFile = checkArgument(optarg);
+                if(missingFile){
+                    fprintf(stderr, "The -i flag requires an argument to follow it.\n");
+                    exit(EXIT_FAILURE);
+                }
                 *inputFile = optarg;
                 break;
             case 'c':
-                checkArgument(optarg);
+                missingFile = checkArgument(optarg);
+                if(missingFile){
+                    fprintf(stderr, "The -c flag requires an argument to follow it.\n");
+                    exit(EXIT_FAILURE);
+                }
                 *countFile = optarg;
                 break;
         }
@@ -193,5 +202,5 @@ int main(int argc, char *argv[]){
 	free(nums);
 
     double totalTime = endTiming(startTime);
-    fprintf(stderr, "The program took %.6f seconds.\n", totalTime);
+    fprintf(stderr, "The sorter program took %.6f seconds.\n", totalTime);
 }

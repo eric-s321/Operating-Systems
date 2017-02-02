@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <stdio.h>
-//#include <stdbool.h>
 #include "parser.h"
 
 void setDefaults(int *numInts, int *minInt, int *maxInt){

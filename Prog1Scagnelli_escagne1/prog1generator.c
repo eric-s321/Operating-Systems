@@ -1,5 +1,3 @@
-//#include <stdlib.h>
-//#include <stdio.h>
 #include <getopt.h>
 #include <time.h>
 #include "prog1generator.h"
@@ -95,17 +93,4 @@ int main(int argc, char *argv[]){
 
     double totalTime = endTiming(startTime);
     fprintf(stderr, "The generator program took %.6f seconds.\n", totalTime);
-    
-/*
-    printf("numInts is %d\n"
-            "minInts is %d\n"
-            "maxInt is %d\n"
-            "seed is %lu\n"
-            "outputFile is %s\n",
-            numInts,
-            minInt,
-            maxInt,
-            seed,
-            outputFile);
-*/
 }

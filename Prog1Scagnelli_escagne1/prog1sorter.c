@@ -1,5 +1,3 @@
-//#include <stdlib.h>
-//#include <stdio.h>
 #include <unistd.h>
 #include <getopt.h>
 #include "prog1sorter.h"
@@ -161,14 +159,6 @@ int main(int argc, char *argv[]){
     }
 
     checkIntRanges(minInt, maxInt, nums, lastIndex);
-
-/*
-    printf("Before sorting...\n");
-    for(int i = 0; i < lastIndex; i++){
-        printf("%d\t", nums[i]);
-    }
-    printf("\n\n");
-*/
 
     qsort(nums, lastIndex, sizeof(int), compareInts);
 

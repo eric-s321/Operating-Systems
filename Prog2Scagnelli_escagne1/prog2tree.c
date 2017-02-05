@@ -79,12 +79,13 @@ void checkRangeOfInputs(int numLevels, int numChildren){
 }
 
 void createProcesses(int numLevels, int numChildren, 
-        bool leafPause, int sleepTime, bool sleepEnabled){
+        bool leafPause, int sleepTime, bool sleepEnabled, char *executablePath){
 
     pid_t pid;
 //    printf("In Create Processes sleep enabled is %s\n",
 //            sleepEnabled ? "true" : "false");
 
+//    printf("Executable path is %s\n", executablePath);
     if(numLevels > 1){ // This process still has children to make
         for(int i = 0; i < numChildren; i++){
             pid = fork();
@@ -100,11 +101,19 @@ void createProcesses(int numLevels, int numChildren,
                 //execlp("/import/linux/home/escagne1/Desktop/Operating-Systems/Prog2Scagnelli_escagne1/prog2tree",
                       //"prog2tree", "-N", newNumLevels, "-M", strNumChildren, NULL); 
                 
+                int status = 0;
                 if(sleepEnabled){
                     char strSleepTime[255];
                     sprintf(strSleepTime, "%d", sleepTime);
-                    execlp("/import/linux/home/escagne1/Desktop/Operating-Systems/Prog2Scagnelli_escagne1/prog2tree",
-                           "prog2tree", "-N", newNumLevels, "-M", strNumChildren, "-s", strSleepTime, NULL); 
+//                    status = execlp("/import/linux/home/escagne1/Desktop/Operating-Systems/Prog2Scagnelli_escagne1/prog2tree",
+//                           "prog2tree", "-N", newNumLevels, "-M", strNumChildren, "-s", strSleepTime, NULL); 
+                    status = execlp(executablePath,"prog2tree", "-N", newNumLevels, "-M", strNumChildren,
+                            "-s", strSleepTime, NULL); 
+                           
+                    if(status == -1){
+                        fprintf(stderr, "Exec call failed.\n");
+                        exit(EXIT_FAILURE);
+                    }
                 }
                 
             }
@@ -121,25 +130,47 @@ void createProcesses(int numLevels, int numChildren,
             sleep(sleepTime);
 //        printf("Done Sleeping\n");
     }
-
 }
 
+char * getExecutablePath(){
+
+// Use this to avoid hardcoding the path so this will work on different machines 
+
+    char *retcwd = (char *) malloc(sizeof(char) * 1024);
+    char cwd[1024];
+    int lastIndex = 0;
+    if (getcwd(cwd, sizeof(cwd)) != NULL){
+        while(cwd[lastIndex] != '\0'){
+            lastIndex++;
+        }
+
+        char *executable = "/prog2tree";
+        for(int i = 0; i < 10; i++){
+            cwd[lastIndex + i] = executable[i];
+        }
+        cwd[lastIndex + 10] = '\0'; //Put NULL character after executable name
+    }
+    for(int i = 0; cwd[i] != '\0'; i++){
+        retcwd[i] = cwd[i];    
+    }
+    retcwd[lastIndex + 10] = '\0';
+
+    return retcwd;
+}
 
 int main(int argc, char *argv[]){
 
-/////////////////////////USE THIS TO AVOID HARDCODING THE PATH ////////////////////////////////////
-//Found at http://stackoverflow.com/questions/298510/how-to-get-the-current-directory-in-a-c-program
-/*
-    char cwd[1024];
-    if (getcwd(cwd, sizeof(cwd)) != NULL)
-        fprintf(stdout, "Current working dir: %s\n", cwd);
 
+
+    /*
     for(int i = 0; cwd[i] != '\0'; i++){
-        printf("%c",cwd[i]);    
+    //    printf("%c",cwd[i]);    
+        printf("i is %d\n",i);
     }
-    printf("\n");
+    */
 
-*/
+
+
 
     
     /*
@@ -151,6 +182,8 @@ int main(int argc, char *argv[]){
     printf("\n\n");
     */
     
+    char *execPath = getExecutablePath();
+//    printf("IN MAIN. the exec path is %s\n", execPath);
     
 
     //Set default values
@@ -192,7 +225,7 @@ int main(int argc, char *argv[]){
             numLevels - 1, getpid(), getppid());
     }
 
-    createProcesses(numLevels, numChildren, leafPause, sleepTime, sleepEnabled); 
+    createProcesses(numLevels, numChildren, leafPause, sleepTime, sleepEnabled, execPath); 
     
     if(numLevels >= 1){
         fprintf(stdout, "EXITING: Level %d process with pid=%d, child of ppid=%d.\n",

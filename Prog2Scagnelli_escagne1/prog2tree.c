@@ -98,15 +98,11 @@ void createProcesses(int numLevels, int numChildren,
                 char strNumChildren[255]; 
                 sprintf(newNumLevels, "%d", (numLevels - 1));
                 sprintf(strNumChildren, "%d", numChildren);
-                //execlp("/import/linux/home/escagne1/Desktop/Operating-Systems/Prog2Scagnelli_escagne1/prog2tree",
-                      //"prog2tree", "-N", newNumLevels, "-M", strNumChildren, NULL); 
                 
                 int status = 0;
                 if(sleepEnabled){
                     char strSleepTime[255];
                     sprintf(strSleepTime, "%d", sleepTime);
-//                    status = execlp("/import/linux/home/escagne1/Desktop/Operating-Systems/Prog2Scagnelli_escagne1/prog2tree",
-//                           "prog2tree", "-N", newNumLevels, "-M", strNumChildren, "-s", strSleepTime, NULL); 
                     status = execlp(executablePath,"prog2tree", "-N", newNumLevels, "-M", strNumChildren,
                             "-s", strSleepTime, NULL); 
                            
@@ -115,8 +111,17 @@ void createProcesses(int numLevels, int numChildren,
                         exit(EXIT_FAILURE);
                     }
                 }
-                
+                else if(leafPause){
+                    printf("IN LEAF PAUSE\n");
+                    status = execlp(executablePath,"prog2tree", "-N", newNumLevels, "-M", strNumChildren,
+                            "-p", NULL); 
+                    if(status == -1){
+                        fprintf(stderr, "Exec call failed.\n");
+                        exit(EXIT_FAILURE);
+                    }
+                }
             }
+
             else{ //Parent Process
                 wait(NULL);
 //                printf("Child has completed.\n"); 
@@ -128,7 +133,8 @@ void createProcesses(int numLevels, int numChildren,
 //        printf("I am a leaf node. My pid is %d and my parents pid is %d\n", getpid(), getppid());
         if(sleepEnabled)
             sleep(sleepTime);
-//        printf("Done Sleeping\n");
+        else if(leafPause)
+            pause();
     }
 }
 

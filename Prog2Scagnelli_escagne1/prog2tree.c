@@ -82,10 +82,7 @@ void createProcesses(int numLevels, int numChildren,
         bool leafPause, int sleepTime, bool sleepEnabled, char *executablePath){
 
     pid_t pid;
-//    printf("In Create Processes sleep enabled is %s\n",
-//            sleepEnabled ? "true" : "false");
 
-//    printf("Executable path is %s\n", executablePath);
     if(numLevels > 1){ // This process still has children to make
         for(int i = 0; i < numChildren; i++){
             pid = fork();
@@ -112,7 +109,6 @@ void createProcesses(int numLevels, int numChildren,
                     }
                 }
                 else if(leafPause){
-                    printf("IN LEAF PAUSE\n");
                     status = execlp(executablePath,"prog2tree", "-N", newNumLevels, "-M", strNumChildren,
                             "-p", NULL); 
                     if(status == -1){
@@ -124,13 +120,11 @@ void createProcesses(int numLevels, int numChildren,
 
             else{ //Parent Process
                 wait(NULL);
-//                printf("Child has completed.\n"); 
             }
         }
     }
 
     else if (numLevels == 1){ //This process is a leaf node.
-//        printf("I am a leaf node. My pid is %d and my parents pid is %d\n", getpid(), getppid());
         if(sleepEnabled)
             sleep(sleepTime);
         else if(leafPause)
@@ -141,7 +135,6 @@ void createProcesses(int numLevels, int numChildren,
 char * getExecutablePath(){
 
 // Use this to avoid hardcoding the path so this will work on different machines 
-
     char *retcwd = (char *) malloc(sizeof(char) * 1024);
     char cwd[1024];
     int lastIndex = 0;
@@ -165,33 +158,9 @@ char * getExecutablePath(){
 }
 
 int main(int argc, char *argv[]){
-
-
-
-    /*
-    for(int i = 0; cwd[i] != '\0'; i++){
-    //    printf("%c",cwd[i]);    
-        printf("i is %d\n",i);
-    }
-    */
-
-
-
-
-    
-    /*
-    printf("\n\n");
-    printf("argc is %d\n", argc);
-    for(int i = 0; i < argc; i++){
-        printf("%s\t", argv[i]);
-    }
-    printf("\n\n");
-    */
     
     char *execPath = getExecutablePath();
-//    printf("IN MAIN. the exec path is %s\n", execPath);
     
-
     //Set default values
     int numLevels = 0;
     int numChildren = 1;
@@ -213,19 +182,6 @@ int main(int argc, char *argv[]){
         sleepEnabled = true; //If user specifies neither -p nor -s we assume -s
 
 
-    
-    /*
-    printf("numLevels is %d\n"
-        "numChildren is %d\n"
-        "leafPause is %s\n"
-        "sleepEnabled is %s\n"
-        "sleepTime is %d\n",
-    numLevels, numChildren,
-    leafPause ? "true" : "false",
-    sleepEnabled ? "true" : "false", sleepTime);    
-    */
-    
-
     if(numLevels >= 1){
         fprintf(stdout,"ALIVE: Level %d process with pid=%d, child of ppid=%d.\n",
             numLevels - 1, getpid(), getppid());
@@ -237,6 +193,8 @@ int main(int argc, char *argv[]){
         fprintf(stdout, "EXITING: Level %d process with pid=%d, child of ppid=%d.\n",
                 numLevels - 1, getpid(), getppid()); 
     }
+
+    free(execPath);
 
     return 0;
 }

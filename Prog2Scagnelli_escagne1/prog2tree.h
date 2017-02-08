@@ -8,7 +8,7 @@ void parseInput(int argc, char *argv[], int *numLevels, int *numChildren,
 void checkRangeOfInputs(int numLevels, int numChildren);
 void createProcesses(int numLevels, int numChildren,
                 bool leafPause, int sleepTime, bool sleepEnabled);
-char * getExecutablePath(int path);
+char * getExecutablePath();
 int main(int argc, char *argv[]);
 
 

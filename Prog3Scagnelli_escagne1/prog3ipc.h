@@ -1,5 +1,8 @@
 
+#include <stdbool.h>
 
 void printUsageAndExit();
-int main(int argc, char *argv[]);
+char *getExecutablePath();
+void parent(int unnamedPipe[], int numProcs, bool topLevelProcess, const char *name);
+void child(int unnamedPipe[], int numProcs, int shmPtr[]);
 

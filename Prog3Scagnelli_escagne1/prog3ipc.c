@@ -15,7 +15,6 @@
 #define PROCESS_COMPLETE -999
 
 int LEVEL;
-//int ROOT_PID;
 int *globalShmPtr;
 
 void printUsageAndExit(){
@@ -26,9 +25,7 @@ void printUsageAndExit(){
 void signalHandler(int signo){
     fprintf(stdout,"EXITING: Level %d process with pid=%d, child of ppid=%d.\n",
             LEVEL, getpid(), getppid());
-//    printf("Setting address %p to %d\n", globalShmPtr, PROCESS_COMPLETE);
     *globalShmPtr = PROCESS_COMPLETE;
-    //kill(ROOT_PID, SIGCONT);
     exit(0);
 }
 
@@ -64,7 +61,7 @@ void parent(int unnamedPipe[], int numProcs, bool topLevelProcess, const char *n
 
     LEVEL = numProcs - 1;
     if(signal(SIGUSR1, signalHandler) == SIG_ERR){
-        fprintf(stderr,"An error occurred while setting a signal handler.\n");
+        perror("Setting signal handler failed");
         exit(EXIT_FAILURE);
     }
 
@@ -72,20 +69,16 @@ void parent(int unnamedPipe[], int numProcs, bool topLevelProcess, const char *n
     while(*globalShmPtr != getpid())
         globalShmPtr++;
     
-    
     while(*shmPtr != -1){
         shmPtr++;
     }
     shmPtr--; //pointer to last element in array (root process ID)
-    //ROOT_PID = *shmPtr;
     
-
     numProcs -= 1;
      
-    //printf("I am the parent with PID: %d writing %d to unnamed pipe\n", getpid(), numProcs);
-     
     //close the read end of pipe
-    close(unnamedPipe[0]);
+    if(close(unnamedPipe[0]) == -1)
+        perror("Close failed");
 
     //write message to child from write end
     //Doing this before fork so that we write before child tries to read
@@ -94,13 +87,15 @@ void parent(int unnamedPipe[], int numProcs, bool topLevelProcess, const char *n
         perror("Problem writing to the pipe");
         exit(EXIT_FAILURE);
     }   
-    close(unnamedPipe[1]);
-
+    if(close(unnamedPipe[1]) == -1)
+        perror("Close failed");
 
     int fd;
     char * myfifo = "/tmp/erics_fifo";
 
     fd = open(myfifo, O_RDONLY);
+    if(fd == -1)
+        perror("Open failed");
 
     int fifoInfo;
 
@@ -110,18 +105,11 @@ void parent(int unnamedPipe[], int numProcs, bool topLevelProcess, const char *n
     }
 
     if(fifoInfo != getpid()){ //Not the root process
-        close(fd);
-        //pause();
+        if(close(fd) == -1)
+            perror("Close failed");
         wait(NULL);
     }
     else{//Root process
-      //  printf("Process %d is the root process\n", getpid());
-      /*
-        while(*shmPtr != -1){
-            shmPtr++;
-        }
-        shmPtr--; //pointer to last element in array (root process ID)
-        */
         int *sharedArrayEnd = shmPtr;
         
         int i;
@@ -139,16 +127,12 @@ void parent(int unnamedPipe[], int numProcs, bool topLevelProcess, const char *n
                 perror("Kill failed");
                 exit(EXIT_FAILURE);
             }
-//            printf("Global Shm Ptr is %p\tshared array end is %p\n", globalShmPtr, sharedArrayEnd);
 
             while(*sharedArrayEnd != PROCESS_COMPLETE){ //Wait for process we just signaled to exit
-    //            printf("IN THE LOOP\n");
-                //printf("Global Shm Ptr is %d\tshared array end is %d\n", *globalShmPtr, *sharedArrayEnd);
             }
             
 
             sharedArrayEnd--;
-      //      kill(ROOT_PID, SIGSTOP);
       }
 
         wait(NULL);
@@ -161,7 +145,8 @@ void parent(int unnamedPipe[], int numProcs, bool topLevelProcess, const char *n
 void child(int unnamedPipe[], int numProcs, int shmPtr[], char *fifo){
 
     //close the write end of pipe
-    close(unnamedPipe[1]);
+    if(close(unnamedPipe[1]) == -1)
+        perror("close failed");
 
     // read message from parent through read end
     if(read(unnamedPipe[0],&numProcs,sizeof(numProcs)) <= 0){
@@ -169,7 +154,8 @@ void child(int unnamedPipe[], int numProcs, int shmPtr[], char *fifo){
         perror("Problem reading from pipe");
         exit(EXIT_FAILURE); 
     }
-    close(unnamedPipe[0]);
+    if(close(unnamedPipe[0]) == -1)
+        perror("close failed");
 
     //Write PID to array
     //Every process will be a child besides the top level process
@@ -202,14 +188,13 @@ void child(int unnamedPipe[], int numProcs, int shmPtr[], char *fifo){
 
         shmPtr -= 1; //Make shmPtr point to root process id
         
-        //ROOT_PID = *shmPtr;
-
         int fd;
         fd = open(fifo, O_WRONLY);
+        if(fd == -1)
+            perror("Open failed");
         
         int i;
         for(i = 0; i < numPotentialReaders; i++){
-            //printf("Write to pipe %d\n", i+1);
             if(write(fd, shmPtr, sizeof(int)) <= 0){
                 fprintf(stderr, "Problem in process %d\n", getpid());
                 perror("Problem writing to the named pipe");
@@ -217,8 +202,10 @@ void child(int unnamedPipe[], int numProcs, int shmPtr[], char *fifo){
             }   
         }
 
-        close(fd);
-        unlink(fifo);
+        if(close(fd) == -1)
+            perror("close failed");
+        if(unlink(fifo) == -1)
+            perror("unlink failed");
 
         pause();
     }
@@ -263,6 +250,8 @@ int main(int argc, char *argv[]){
 
     //Set up shared memory array
     int shm_fd = shm_open(name, O_CREAT | O_RDWR, 0666);
+    if(shm_fd == -1)
+        perror("shm_open failed");
 
     char * fifo = "/tmp/erics_fifo";
 

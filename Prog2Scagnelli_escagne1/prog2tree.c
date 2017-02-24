@@ -86,8 +86,10 @@ void createProcesses(int numLevels, int numChildren,
     if(numLevels == 1){ //This process is a leaf node.
         if(sleepEnabled)
             sleep(sleepTime);
-        else if(leafPause)
+        else if(leafPause){
             pause();
+        }
+
 
     }
 

@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -D_SVID_SOURCE
+CFLAGS = -Wall
 
 all: prog3ipc
 

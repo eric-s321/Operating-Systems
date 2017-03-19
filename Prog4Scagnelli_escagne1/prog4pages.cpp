@@ -2,14 +2,10 @@
 #include <algorithm>
 #include <iostream>
 #include <ctime>
-#include <deque>
-#include <vector>
 #include "prog4pages.hpp"
 
 #define PAGE_ACCESSES 10000
 #define UNIQUE_LOOPING_PAGES 50
-
-using namespace std;
 
 //Max is inclusive
 int randomInt(int min, int max){
@@ -26,6 +22,61 @@ bool vectorContains(vector<int> mem, int page){
     if(find(mem.begin(), mem.end(), page) != mem.end())
         return true;
     return false;
+}
+
+float optimal(int *workLoad, unsigned int memSize){
+    int hits = 0;
+    int misses = 0;
+
+    vector<int> mem;
+
+    for(int i = 0; i < PAGE_ACCESSES; i++){
+        if(mem.size() < memSize){ //mem not yet full
+            if(!vectorContains(mem, workLoad[i])){
+                mem.push_back(workLoad[i]);
+                misses++;
+                //cout << "MISS" << endl;
+            }
+            else{
+                hits++;
+                //cout << "HIT" << endl;
+            }
+        }
+        else{ //mem is full, use optimal page replacement
+            if(vectorContains(mem, workLoad[i])){
+                hits++;
+                //cout << "HIT" << endl;
+            }
+            else{
+                int evictIndex = getOptimalEvictPage(mem, workLoad, i);                  
+                //cout << "evicting page " << mem[evictIndex] << endl;
+                mem[evictIndex] = workLoad[i];
+                misses++;
+                //cout << "MISS" << endl;
+            }
+        }
+    }
+
+    return (hits / (float) (hits + misses)) * 100;
+}
+
+int getOptimalEvictPage(vector<int> mem, int *workLoad, int workLoadIndex){
+
+    int distances[mem.size()];
+    for(unsigned int i = 0; i < mem.size(); i++){
+        int page = mem[i];
+        int distanceAway = 0;
+        int index = workLoadIndex;
+        for(;index < PAGE_ACCESSES; index++){
+            if(workLoad[index] == page)
+               break; 
+            distanceAway++;
+        }    
+        distances[i] = distanceAway;
+    }
+
+    int evictIndex = distance(distances, max_element(distances, distances + mem.size()));
+    return evictIndex;
 }
 
 float fifo(int *workLoad, unsigned int memSize){
@@ -95,8 +146,6 @@ float random(int *workLoad, unsigned int memSize){
         }
     }
     return (hits / (float) (hits + misses)) * 100;
-
-
 }
 
 
@@ -163,16 +212,27 @@ int main(){
 */
 
 //    int testWorkload [] = {0,1,2,0,1,3,0,3,1,2,1};
-    cout << "Fifo results..." << endl;
-    for(int i = 5; i <= 100; i += 5){
-        float hitRate = fifo(noLocalityWorkload, i);
-        cout << "Hit rate is " << hitRate << endl;
-    }
 
-    cout << "Random results..." << endl;
-    for(int i = 5; i <= 100; i += 5){
-        float hitRate = random(noLocalityWorkload, i);
-        cout << "Hit rate is " << hitRate << endl;
+    vector<float> optResults;
+    for(int i = 5; i <= 100; i += 5)
+        optResults.push_back(optimal(noLocalityWorkload, i));
+    
+
+    vector<float> fifoResults;
+    for(int i = 5; i <= 100; i += 5)
+        fifoResults.push_back(fifo(noLocalityWorkload, i));
+    
+
+    vector<float> randomResults;;
+    for(int i = 5; i <= 100; i += 5)
+        randomResults.push_back(random(noLocalityWorkload, i));
+
+    int memSize = 5;
+    for(unsigned int i = 0; i < optResults.size(); i++){
+        cout << memSize << ": Opt: " << optResults[i] << "\t"
+             << "FIFO: " << fifoResults[i] << "\t"
+             << "Random: " << randomResults[i] << endl;
+        memSize += 5;
     }
 
     delete []noLocalityWorkload; 

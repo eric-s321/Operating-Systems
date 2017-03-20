@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <iostream>
 #include <ctime>
+#include <fstream>
 #include "prog4pages.hpp"
 
 #define PAGE_ACCESSES 10000
@@ -249,6 +250,10 @@ void noLocalitySimulation(){
     vector<float> LRUResults;
     for(int i = 5; i <= 100; i += 5)
         LRUResults.push_back(LRU(noLocalityWorkload, i));
+
+    ofstream outFile;
+    outFile.open("no-locality.csv");
+    outFile << "#cache,OPT,LRU,FIFO,RAND,CLOCK\n";
     
     int memSize = 5;
     for(unsigned int i = 0; i < optResults.size(); i++){
@@ -256,8 +261,13 @@ void noLocalitySimulation(){
              << "FIFO: " << fifoResults[i] << "\t"
              << "Random: " << randomResults[i] << "\t" 
              << "LRU: " << LRUResults[i] << endl;
+        outFile << memSize << "," << optResults[i] << "," << 
+            LRUResults[i] << "," << fifoResults[i] << "," <<
+            randomResults[i] << "\n";
         memSize += 5;
     }
+
+    outFile.close();
 
     delete []noLocalityWorkload;
 }
@@ -281,14 +291,23 @@ void eighty20Simulation(){
     for(int i = 5; i <= 100; i += 5)
         LRUResults.push_back(LRU(eighty20Workload, i));
     
+    ofstream outFile;
+    outFile.open("80-20.csv");
+    outFile << "#cache,OPT,LRU,FIFO,RAND,CLOCK\n";
+
     int memSize = 5;
     for(unsigned int i = 0; i < optResults.size(); i++){
         cout << memSize << ": Opt: " << optResults[i] << "\t"
              << "FIFO: " << fifoResults[i] << "\t"
              << "Random: " << randomResults[i] << "\t" 
              << "LRU: " << LRUResults[i] << endl;
+        outFile << memSize << "," << optResults[i] << "," << 
+            LRUResults[i] << "," << fifoResults[i] << "," <<
+            randomResults[i] << "\n";
         memSize += 5;
     }
+
+    outFile.close();
 
     delete []eighty20Workload;
 }
@@ -312,14 +331,23 @@ void loopingSimulation(){
     for(int i = 5; i <= 100; i += 5)
         LRUResults.push_back(LRU(loopingWorkload, i));
     
+    ofstream outFile;
+    outFile.open("looping.csv");
+    outFile << "#cache,OPT,LRU,FIFO,RAND,CLOCK\n";
+
     int memSize = 5;
     for(unsigned int i = 0; i < optResults.size(); i++){
         cout << memSize << ": Opt: " << optResults[i] << "\t"
              << "FIFO: " << fifoResults[i] << "\t"
              << "Random: " << randomResults[i] << "\t" 
              << "LRU: " << LRUResults[i] << endl;
+        outFile << memSize << "," << optResults[i] << "," << 
+            LRUResults[i] << "," << fifoResults[i] << "," <<
+            randomResults[i] << "\n";
         memSize += 5;
     }
+
+    outFile.close();
 
     delete []loopingWorkload;
 }

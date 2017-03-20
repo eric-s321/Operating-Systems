@@ -12,7 +12,7 @@ int randomInt(int min, int max){
     return rand() % (max + 1 - min);
 }
 
-bool fifoContains(deque<int> fifo, int page){
+bool dequeContains(deque<int> fifo, int page){
     if(find(fifo.begin(), fifo.end(), page) != fifo.end()) //page is in the deque
         return true;
     return false;
@@ -79,6 +79,53 @@ int getOptimalEvictPage(vector<int> mem, int *workLoad, int workLoadIndex){
     return evictIndex;
 }
 
+/*
+void printMem(deque<int> mem){
+    for(int i = 0; i < mem.size(); i++){
+        cout << mem[i] << " ";
+    }
+    cout << endl;
+}
+*/
+
+float LRU(int *workLoad, unsigned int memSize){
+    int hits = 0;
+    int misses = 0;
+    deque<int> mem;
+
+    for(int i = 0; i < PAGE_ACCESSES; i++){
+        if(mem.size() < memSize){ //mem not yet full
+            if(!dequeContains(mem, workLoad[i])){
+                mem.push_back(workLoad[i]);
+                misses++;
+//                cout << "MISS" << endl;
+            }
+            else{
+                mem.erase(find(mem.begin(),mem.end(),workLoad[i])); //Take current page in workload off deque
+                mem.push_back(workLoad[i]); //Puts the page we just accessed at the back of the deque
+                hits++;
+//                cout << "HIT" << endl;
+            }
+        }
+        else{ //mem is full
+            if(dequeContains(mem, workLoad[i])){
+                mem.erase(find(mem.begin(),mem.end(),workLoad[i])); //Take current page in workload off deque
+                mem.push_back(workLoad[i]); //Puts the page we just accessed at the back of the deque
+                hits++;
+//                cout << "HIT" << endl;
+            }
+            else{
+                mem.pop_front(); //Take LRU page off deque
+                mem.push_back(workLoad[i]); 
+                misses++;
+//                cout << "MISS" << endl;
+            }
+        }
+    }
+    return (hits / (float) (hits + misses)) * 100;
+}
+
+
 float fifo(int *workLoad, unsigned int memSize){
     int hits = 0;
     int misses = 0;
@@ -86,7 +133,7 @@ float fifo(int *workLoad, unsigned int memSize){
 
     for(int i = 0; i < PAGE_ACCESSES; i++){
         if(fifo.size() < memSize){ //fifo not yet full
-            if(!fifoContains(fifo, workLoad[i])){
+            if(!dequeContains(fifo, workLoad[i])){
                 fifo.push_back(workLoad[i]);
                 misses++;
 //                cout << "MISS" << endl;
@@ -98,7 +145,7 @@ float fifo(int *workLoad, unsigned int memSize){
         }
         else{ //fifo is full
             int nextPage = workLoad[i];
-            if(fifoContains(fifo, nextPage)){
+            if(dequeContains(fifo, nextPage)){
                 hits++;            
 //                cout << "HIT" << endl;
             }
@@ -184,60 +231,111 @@ int* getLoopingWorkload(){
     return workLoad;
 }
 
-int main(){
-
-    srand((unsigned)time(0));
-    
+void noLocalitySimulation(){
     int *noLocalityWorkload = getNoLocalityWorkload();    
-    int *eighty20Workload = get80_20Workload();
-    int *loopingWorkload = getLoopingWorkload();
-
-/*
-    cout << "No Locality Workload..." << endl;
-    for(int i = 0; i < PAGE_ACCESSES; i++){
-        cout << noLocalityWorkload[i] << endl;
-    }
-
-    cout << "\n\n 80/20 Workload..." << endl;
-
-    for(int i = 0; i < PAGE_ACCESSES; i++){
-        cout << eighty20Workload[i] << endl;
-    }
-
-    cout << "\n\n Looping Workload..." << endl;
-
-    for(int i = 0; i < PAGE_ACCESSES; i++){
-        cout << loopingWorkload[i] << endl;
-    }
-*/
-
-//    int testWorkload [] = {0,1,2,0,1,3,0,3,1,2,1};
 
     vector<float> optResults;
     for(int i = 5; i <= 100; i += 5)
         optResults.push_back(optimal(noLocalityWorkload, i));
-    
 
     vector<float> fifoResults;
     for(int i = 5; i <= 100; i += 5)
         fifoResults.push_back(fifo(noLocalityWorkload, i));
-    
 
-    vector<float> randomResults;;
+    vector<float> randomResults;
     for(int i = 5; i <= 100; i += 5)
         randomResults.push_back(random(noLocalityWorkload, i));
-
+    
+    vector<float> LRUResults;
+    for(int i = 5; i <= 100; i += 5)
+        LRUResults.push_back(LRU(noLocalityWorkload, i));
+    
     int memSize = 5;
     for(unsigned int i = 0; i < optResults.size(); i++){
         cout << memSize << ": Opt: " << optResults[i] << "\t"
              << "FIFO: " << fifoResults[i] << "\t"
-             << "Random: " << randomResults[i] << endl;
+             << "Random: " << randomResults[i] << "\t" 
+             << "LRU: " << LRUResults[i] << endl;
         memSize += 5;
     }
 
-    delete []noLocalityWorkload; 
+    delete []noLocalityWorkload;
+}
+
+void eighty20Simulation(){
+    int *eighty20Workload = get80_20Workload();
+
+    vector<float> optResults;
+    for(int i = 5; i <= 100; i += 5)
+        optResults.push_back(optimal(eighty20Workload, i));
+
+    vector<float> fifoResults;
+    for(int i = 5; i <= 100; i += 5)
+        fifoResults.push_back(fifo(eighty20Workload, i));
+
+    vector<float> randomResults;
+    for(int i = 5; i <= 100; i += 5)
+        randomResults.push_back(random(eighty20Workload, i));
+    
+    vector<float> LRUResults;
+    for(int i = 5; i <= 100; i += 5)
+        LRUResults.push_back(LRU(eighty20Workload, i));
+    
+    int memSize = 5;
+    for(unsigned int i = 0; i < optResults.size(); i++){
+        cout << memSize << ": Opt: " << optResults[i] << "\t"
+             << "FIFO: " << fifoResults[i] << "\t"
+             << "Random: " << randomResults[i] << "\t" 
+             << "LRU: " << LRUResults[i] << endl;
+        memSize += 5;
+    }
+
     delete []eighty20Workload;
+}
+
+void loopingSimulation(){
+    int *loopingWorkload = getLoopingWorkload();
+
+    vector<float> optResults;
+    for(int i = 5; i <= 100; i += 5)
+        optResults.push_back(optimal(loopingWorkload, i));
+
+    vector<float> fifoResults;
+    for(int i = 5; i <= 100; i += 5)
+        fifoResults.push_back(fifo(loopingWorkload, i));
+
+    vector<float> randomResults;
+    for(int i = 5; i <= 100; i += 5)
+        randomResults.push_back(random(loopingWorkload, i));
+    
+    vector<float> LRUResults;
+    for(int i = 5; i <= 100; i += 5)
+        LRUResults.push_back(LRU(loopingWorkload, i));
+    
+    int memSize = 5;
+    for(unsigned int i = 0; i < optResults.size(); i++){
+        cout << memSize << ": Opt: " << optResults[i] << "\t"
+             << "FIFO: " << fifoResults[i] << "\t"
+             << "Random: " << randomResults[i] << "\t" 
+             << "LRU: " << LRUResults[i] << endl;
+        memSize += 5;
+    }
+
     delete []loopingWorkload;
+}
+
+int main(){
+
+    srand((unsigned)time(0));
+    
+    cout << "No Locality..." << endl;
+    noLocalitySimulation();
+    cout << "\n\n80/20..." << endl;
+    eighty20Simulation();
+    cout << "\n\nLooping..." << endl;
+    loopingSimulation();
+
+//    int testWorkload [] = {0,1,2,0,1,3,0,3,1,2,1};
 
     return 0;
 }

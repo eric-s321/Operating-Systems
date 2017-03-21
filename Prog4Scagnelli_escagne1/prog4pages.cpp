@@ -8,6 +8,11 @@
 #define PAGE_ACCESSES 10000
 #define UNIQUE_LOOPING_PAGES 50
 
+struct clockEntry{
+    int page;
+    int usedBit;
+};
+
 //Max is inclusive
 int randomInt(int min, int max){
     return rand() % (max + 1 - min);
@@ -36,24 +41,19 @@ float optimal(int *workLoad, unsigned int memSize){
             if(!vectorContains(mem, workLoad[i])){
                 mem.push_back(workLoad[i]);
                 misses++;
-                //cout << "MISS" << endl;
             }
             else{
                 hits++;
-                //cout << "HIT" << endl;
             }
         }
         else{ //mem is full, use optimal page replacement
             if(vectorContains(mem, workLoad[i])){
                 hits++;
-                //cout << "HIT" << endl;
             }
             else{
                 int evictIndex = getOptimalEvictPage(mem, workLoad, i);                  
-                //cout << "evicting page " << mem[evictIndex] << endl;
                 mem[evictIndex] = workLoad[i];
                 misses++;
-                //cout << "MISS" << endl;
             }
         }
     }
@@ -80,15 +80,6 @@ int getOptimalEvictPage(vector<int> mem, int *workLoad, int workLoadIndex){
     return evictIndex;
 }
 
-/*
-void printMem(deque<int> mem){
-    for(int i = 0; i < mem.size(); i++){
-        cout << mem[i] << " ";
-    }
-    cout << endl;
-}
-*/
-
 float LRU(int *workLoad, unsigned int memSize){
     int hits = 0;
     int misses = 0;
@@ -99,13 +90,11 @@ float LRU(int *workLoad, unsigned int memSize){
             if(!dequeContains(mem, workLoad[i])){
                 mem.push_back(workLoad[i]);
                 misses++;
-//                cout << "MISS" << endl;
             }
             else{
                 mem.erase(find(mem.begin(),mem.end(),workLoad[i])); //Take current page in workload off deque
                 mem.push_back(workLoad[i]); //Puts the page we just accessed at the back of the deque
                 hits++;
-//                cout << "HIT" << endl;
             }
         }
         else{ //mem is full
@@ -113,18 +102,78 @@ float LRU(int *workLoad, unsigned int memSize){
                 mem.erase(find(mem.begin(),mem.end(),workLoad[i])); //Take current page in workload off deque
                 mem.push_back(workLoad[i]); //Puts the page we just accessed at the back of the deque
                 hits++;
-//                cout << "HIT" << endl;
             }
             else{
                 mem.pop_front(); //Take LRU page off deque
                 mem.push_back(workLoad[i]); 
                 misses++;
-//                cout << "MISS" << endl;
             }
         }
     }
     return (hits / (float) (hits + misses)) * 100;
 }
+
+//returns the index if the page is in memory
+//returns -1 if not in memory
+int inMemory(vector<int> mem, int page){
+    for(unsigned int i = 0; i < mem.size(); i++){
+        if(mem[i] == page)
+            return i;
+    }
+    return -1;
+}
+
+float clock(int *workLoad, unsigned int memSize){
+    int hits = 0;
+    int misses = 0;
+    vector<int> mem;
+    clockEntry pages [100];
+    unsigned int index = 0;
+
+    //Initialize all unique pages used bits to 0
+    for(int i = 0; i < 100; i++){
+        pages[i].page = i;
+        pages[i].usedBit = 0;
+    }
+
+    for(int i = 0; i < PAGE_ACCESSES; i++){
+        if(mem.size() < memSize){ //mem not yet full
+            if(!vectorContains(mem,workLoad[i])){ //page is not in mem
+                mem.push_back(workLoad[i]);
+                misses++;
+            }
+            else{
+                hits++;
+            }
+        }
+        else{ //mem is full
+            int nextPage = workLoad[i];
+            if(vectorContains(mem,nextPage)){ //page is already in mem
+                hits++;            
+            }
+            else{ //Clock alg to find replacement
+                bool pageReplaced = false;
+                while(!pageReplaced){
+                    int memIndex = inMemory(mem, pages[index].page);
+                    if(pages[index].usedBit == 0 && memIndex != -1){ //page has not been recently used and is in memory
+                        mem[memIndex] = nextPage;
+                        pageReplaced = true;
+                    }
+                    else if(pages[index].usedBit == 1)//page has been recently used
+                        pages[index].usedBit = 0;
+                    
+                    if(index + 1 == 100)
+                        index = 0;
+                    else
+                        index++;
+                }
+                misses++;
+            }
+        }
+    }
+    return (hits / (float) (hits + misses)) * 100;
+}
+
 
 
 float fifo(int *workLoad, unsigned int memSize){
@@ -137,24 +186,20 @@ float fifo(int *workLoad, unsigned int memSize){
             if(!dequeContains(fifo, workLoad[i])){
                 fifo.push_back(workLoad[i]);
                 misses++;
-//                cout << "MISS" << endl;
             }
             else{
                 hits++;
-//                cout << "HIT" << endl;
             }
         }
         else{ //fifo is full
             int nextPage = workLoad[i];
             if(dequeContains(fifo, nextPage)){
                 hits++;            
-//                cout << "HIT" << endl;
             }
             else{
                 fifo.pop_front();
                 fifo.push_back(nextPage);
                 misses++;
-//                cout << "MISS" << endl;
             }
         }
     }
@@ -172,24 +217,20 @@ float random(int *workLoad, unsigned int memSize){
             if(!vectorContains(mem, workLoad[i])){
                 mem.push_back(workLoad[i]);
                 misses++;
-//                cout << "MISS" << endl;
             }
             else{
                 hits++;
-//                cout << "HIT" << endl;
             }
         }
         else{ //fifo is full
             int nextPage = workLoad[i];
             if(vectorContains(mem, nextPage)){
                 hits++;            
-//                cout << "HIT" << endl;
             }
             else{
                 int randIndex = randomInt(0,memSize-1);
                 mem[randIndex] = nextPage;
                 misses++;
-//                cout << "MISS" << endl;
             }
         }
     }
@@ -251,19 +292,25 @@ void noLocalitySimulation(){
     for(int i = 5; i <= 100; i += 5)
         LRUResults.push_back(LRU(noLocalityWorkload, i));
 
+    vector<float> clockResults;
+    for(int i = 5; i <= 100; i += 5)
+        clockResults.push_back(clock(noLocalityWorkload, i));
+
     ofstream outFile;
     outFile.open("no-locality.csv");
+
+    if(!outFile.is_open()){
+        perror("Creating file failed.");
+        exit(EXIT_FAILURE);
+    }
+
     outFile << "#cache,OPT,LRU,FIFO,RAND,CLOCK\n";
     
     int memSize = 5;
     for(unsigned int i = 0; i < optResults.size(); i++){
-        cout << memSize << ": Opt: " << optResults[i] << "\t"
-             << "FIFO: " << fifoResults[i] << "\t"
-             << "Random: " << randomResults[i] << "\t" 
-             << "LRU: " << LRUResults[i] << endl;
         outFile << memSize << "," << optResults[i] << "," << 
             LRUResults[i] << "," << fifoResults[i] << "," <<
-            randomResults[i] << "\n";
+            randomResults[i] << "," << clockResults[i] << "\n";
         memSize += 5;
     }
 
@@ -290,20 +337,26 @@ void eighty20Simulation(){
     vector<float> LRUResults;
     for(int i = 5; i <= 100; i += 5)
         LRUResults.push_back(LRU(eighty20Workload, i));
+
+    vector<float> clockResults;
+    for(int i = 5; i <= 100; i += 5)
+        clockResults.push_back(clock(eighty20Workload, i));
     
     ofstream outFile;
     outFile.open("80-20.csv");
+
+    if(!outFile.is_open()){
+        perror("Creating file failed.");
+        exit(EXIT_FAILURE);
+    }
+
     outFile << "#cache,OPT,LRU,FIFO,RAND,CLOCK\n";
 
     int memSize = 5;
     for(unsigned int i = 0; i < optResults.size(); i++){
-        cout << memSize << ": Opt: " << optResults[i] << "\t"
-             << "FIFO: " << fifoResults[i] << "\t"
-             << "Random: " << randomResults[i] << "\t" 
-             << "LRU: " << LRUResults[i] << endl;
         outFile << memSize << "," << optResults[i] << "," << 
             LRUResults[i] << "," << fifoResults[i] << "," <<
-            randomResults[i] << "\n";
+            randomResults[i] << "," << clockResults[i] << "\n";
         memSize += 5;
     }
 
@@ -331,19 +384,25 @@ void loopingSimulation(){
     for(int i = 5; i <= 100; i += 5)
         LRUResults.push_back(LRU(loopingWorkload, i));
     
+    vector<float> clockResults;
+    for(int i = 5; i <= 100; i += 5)
+        clockResults.push_back(clock(loopingWorkload, i));
+    
     ofstream outFile;
     outFile.open("looping.csv");
+
+    if(!outFile.is_open()){
+        perror("Creating file failed.");
+        exit(EXIT_FAILURE);
+    }
+
     outFile << "#cache,OPT,LRU,FIFO,RAND,CLOCK\n";
 
     int memSize = 5;
     for(unsigned int i = 0; i < optResults.size(); i++){
-        cout << memSize << ": Opt: " << optResults[i] << "\t"
-             << "FIFO: " << fifoResults[i] << "\t"
-             << "Random: " << randomResults[i] << "\t" 
-             << "LRU: " << LRUResults[i] << endl;
         outFile << memSize << "," << optResults[i] << "," << 
             LRUResults[i] << "," << fifoResults[i] << "," <<
-            randomResults[i] << "\n";
+            randomResults[i] << "," << clockResults[i] << "\n";
         memSize += 5;
     }
 
@@ -356,14 +415,9 @@ int main(){
 
     srand((unsigned)time(0));
     
-    cout << "No Locality..." << endl;
     noLocalitySimulation();
-    cout << "\n\n80/20..." << endl;
     eighty20Simulation();
-    cout << "\n\nLooping..." << endl;
     loopingSimulation();
-
-//    int testWorkload [] = {0,1,2,0,1,3,0,3,1,2,1};
 
     return 0;
 }

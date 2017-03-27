@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -std=c99 -pthread
 
-all: fig1 fig2 fig3 fig3_poor1 fig3_poor2 pc_v1 fig6_broken fig8_broken2
+all: fig1 fig2 fig3 fig3_poor1 fig3_poor2 pc_v1 fig6_broken fig8_broken2 fig10_finally fig1112_final fig13_covering
 
 fig1: fig1.o
 	$(CC) $(CFLAGS) -o fig1 fig1.o
@@ -51,8 +51,26 @@ fig8_broken2: fig8_broken2.o
 fig8_broken2.o: fig8_broken2.c
 	$(CC) $(CFLAGS) -c fig8_broken2.c
 
+fig10_finally: fig10_finally.o
+	$(CC) $(CFLAGS) -o fig10_finally fig10_finally.o
+
+fig10_finally.o: fig10_finally.c
+	$(CC) $(CFLAGS) -c fig10_finally.c
+
+fig1112_final: fig1112_final.o
+	$(CC) $(CFLAGS) -o fig1112_final fig1112_final.o
+
+fig1112_final.o: fig1112_final.c
+	$(CC) $(CFLAGS) -c fig1112_final.c
+
+fig13_covering: fig13_covering.o
+	$(CC) $(CFLAGS) -o fig13_covering fig13_covering.o
+
+fig13_covering.o: fig13_covering.c
+	$(CC) $(CFLAGS) -c fig13_covering.c
+
 clean:
-	rm *.o fig1 fig2 fig3 fig3_poor1 fig3_poor2 pc_v1 fig6_broken fig8_broken2
+	rm *.o fig1 fig2 fig3 fig3_poor1 fig3_poor2 pc_v1 fig6_broken fig8_broken2 fig10_finally fig1112_final fig13_covering
 
 
 
